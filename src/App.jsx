@@ -1,3 +1,4 @@
+import './App.css';
 export default function App() {
   const fecha = new Date().toLocaleString();
 
