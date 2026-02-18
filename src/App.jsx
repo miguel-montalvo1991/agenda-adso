@@ -12,9 +12,9 @@ export default function App() {
     },
     {
       id: 2,
-      nombre: "Juan Díaz",
+      nombre: "Miguel Montalvo",
       telefono: "301 987 6543",
-      correo: "juan@sena.edu.co",
+      correo: "Montalvo@gmail.com",
       etiqueta: "Instructor",
     },
     {
@@ -26,16 +26,16 @@ export default function App() {
     },
     {
       id: 4,
-      nombre: "Luis Martínez",
+      nombre: "Davier Q+uinto",
       telefono: "315 444 2211",
-      correo: "luis@gmail.com",
+      correo: "Davier@quinto.afro",
       etiqueta: "Familia",
     },
     {
       id: 5,
-      nombre: "Valentina Torres",
+      nombre: "Maniuela Cordoba ",
       telefono: "312 678 9900",
-      correo: "vale@gmail.com",
+      correo: "Manuela@gmail.com",
       etiqueta: "Compañera de ficha",
     },
   ];
