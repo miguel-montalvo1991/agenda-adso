@@ -1,8 +1,10 @@
+import { useState } from "react";
 import "./App.css";
 import ContactoCard from "./components/ContactoCard";
+import FormularioContacto from "./components/FormularioContacto";
 
 export default function App() {
-  const contactos = [
+  const [contactos, setContactos] = useState([
     {
       id: 1,
       nombre: "Carolina Pérez",
@@ -10,54 +12,37 @@ export default function App() {
       correo: "carolina@sena.edu.co",
       etiqueta: "Compañera",
     },
-    {
-      id: 2,
-      nombre: "Miguel Montalvo",
-      telefono: "301 987 6543",
-      correo: "Montalvo@gmail.com",
-      etiqueta: "Instructor",
-    },
-    {
-      id: 3,
-      nombre: "Luisa Martínez",
-      telefono: "320 555 7788",
-      correo: "luisa@sena.edu.co",
-      etiqueta: "Cliente",
-    },
-    {
-      id: 4,
-      nombre: "Davier Q+uinto",
-      telefono: "315 444 2211",
-      correo: "Davier@quinto.afro",
-      etiqueta: "Familia",
-    },
-    {
-      id: 5,
-      nombre: "Maniuela Cordoba ",
-      telefono: "312 678 9900",
-      correo: "Manuela@gmail.com",
-      etiqueta: "Compañera de ficha",
-    },
-  ];
+  ]);
+
+  // Agregar
+  const agregarContacto = (nuevo) => {
+    setContactos((prev) => [...prev, { id: Date.now(), ...nuevo }]);
+  };
+
+  // Eliminar
+  const eliminarContacto = (id) => {
+    setContactos((prev) => prev.filter((c) => c.id !== id));
+  };
 
   return (
     <main className="app-container">
-      <h1 className="app-title">Agenda ADSO 📒</h1>
-      <p className="app-subtitle">Contactos guardados</p>
+      <h1 className="app-title">Agenda ADSO v2</h1>
 
-      {contactos.map((c) => (
-        <ContactoCard
-          key={c.id}
-          nombre={c.nombre}
-          telefono={c.telefono}
-          correo={c.correo}
-          etiqueta={c.etiqueta}
-        />
-      ))}
+      <FormularioContacto onAgregar={agregarContacto} />
 
-      <p className="app-nota">
-        (Versión 0.1 - solo lectura, sin agregar ni editar todavía)
-      </p>
+      <section className="lista-contactos">
+        {contactos.map((c) => (
+          <ContactoCard
+            key={c.id}
+            id={c.id}
+            nombre={c.nombre}
+            telefono={c.telefono}
+            correo={c.correo}
+            etiqueta={c.etiqueta}
+            onDelete={eliminarContacto}
+          />
+        ))}
+      </section>
     </main>
   );
 }
