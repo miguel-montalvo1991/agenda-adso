@@ -1,72 +1,51 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+.app-container {
+  max-width: 400px;
+  margin: 20px auto;
+  font-family: sans-serif;
+}
+
+.app-title {
   text-align: center;
-  /* Fondo tipico de interfaces institucionales */
-  background-color: #ffffff; 
-  color: #393939; /* Gris oscuro para mejor lectura */
+  color: #008037;
+  margin-bottom: 20px;
 }
 
-/* Estilos para el Logo del SENA */
-.logo {
-  height: 8em; /* Un poco más grande para que resalte el logo */
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+.app-subtitle {
+  text-align: center;
+  font-size: 14px;
+  color: #555;
+  margin-top: 0;
+  margin-bottom: 16px;
 }
 
-/* Efecto de resplandor con el Naranja SENA */
-.logo:hover {
-  filter: drop-shadow(0 0 2em #fc7323aa);
-}
-
-/* Si usas el logo circular verde, este efecto queda genial */
-.logo.sena-green:hover {
-  filter: drop-shadow(0 0 2em #39a900aa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Animación opcional para el logo */
-@media (prefers-reduced-motion: no-preference) {
-  .logo {
-    /* El logo del SENA suele ser estático, pero si quieres 
-       que gire como el de React, mantén esto: */
-    animation: logo-spin infinite 30s linear;
-  }
-}
-
-.card {
-  padding: 2em;
+.card-contacto {
+  border: 1px solid gray;
+  background-color: #f9f9f9;
+  padding: 10px;
+  margin: 5px 0;
   border-radius: 8px;
-  background-color: #f4f4f4; /* Gris muy suave para tarjetas */
-  border-left: 5px solid #39a900; /* Detalle en Verde SENA */
 }
 
-/* Botones (si los tienes en tu componente) */
-button {
-  background-color: #fc7323; /* Naranja SENA */
-  color: white;
-  border: none;
-  padding: 0.6em 1.2em;
+.card-nombre {
+  margin: 0 0 6px 0;
+  font-size: 16px;
   font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.25s;
 }
 
-button:hover {
-  background-color: #e65d0f; /* Naranja más oscuro al pasar el mouse */
+.card-linea {
+  margin: 4px 0;
+  font-size: 14px;
 }
 
-.read-the-docs {
-  color: #39a900; /* Texto informativo en Verde SENA */
-  font-weight: 500;
+.card-etiqueta {
+  margin: 4px 0;
+  font-size: 12px;
+  color: green;
+}
+
+.app-nota {
+  font-size: 12px;
+  text-align: center;
+  margin-top: 30px;
+  color: #888;
 }
