@@ -1,105 +1,109 @@
 import { useState } from "react";
 
-// Estado inicial del formulario con todos los campos vacíos
-const inicial = {
-  nombre: "",
-  telefono: "",
-  correo: "",
-  empresa: "",
-  etiqueta: "",
-};
-
 export default function FormularioContacto({ onAgregar }) {
-  // Estado local del formulario
-  const [form, setForm] = useState(inicial);
+  // Estado local del formulario con todos los campos vacíos
+  const [form, setForm] = useState({
+    nombre: "",
+    telefono: "",
+    correo: "",
+    etiqueta: "",
+    empresa: "", // campo extra - mini reto de la clase
+  });
 
-  // Actualiza el campo correspondiente cada vez que el usuario escribe
-  // e.target.name identifica qué campo cambió
-  // e.target.value es el nuevo valor escrito
+  // onChange genérico: detecta qué campo cambió por el atributo "name"
   const onChange = (e) => {
-    const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Se ejecuta cuando el usuario envía el formulario
+  // onSubmit: valida los campos obligatorios y llama al padre
   const onSubmit = (e) => {
     e.preventDefault(); // Evita que la página se recargue
-    if (!form.nombre || !form.telefono || !form.correo) return; // Valida campos obligatorios
-    onAgregar(form);    // Llama a la función del padre para agregar el contacto
-    setForm(inicial);   // Limpia el formulario después de agregar
+    if (!form.nombre || !form.telefono || !form.correo) return;
+    onAgregar(form);
+    setForm({ nombre: "", telefono: "", correo: "", etiqueta: "", empresa: "" });
   };
 
   return (
-    // bg-white: fondo blanco | shadow-md: sombra media | rounded-lg: bordes redondeados
-    // p-5: padding interior | flex flex-col: disposición vertical | gap-4: separación entre elementos
-    <form
-      onSubmit={onSubmit}
-      className="bg-white shadow-md rounded-lg p-5 flex flex-col gap-4 mb-6"
-    >
-      <h2 className="text-lg font-bold text-morado-oscuro">Nuevo contacto</h2>
+    <form onSubmit={onSubmit} className="space-y-6">
 
-      {/* Cada campo tiene su label y su input envueltos en un div */}
-      <div>
-        <label className="text-sm font-semibold block mb-1">Nombre *</label>
-        <input
-          name="nombre"
-          value={form.nombre}
-          onChange={onChange}
-          placeholder="Ej: Ana López"
-          // focus:ring-2 focus:ring-morado: resalta el borde al hacer clic en el campo
-          className="w-full border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-morado"
-        />
+      {/* Grid de 2 columnas en pantallas medianas, 1 en móvil */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        {/* Campo Nombre */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Nombre *
+          </label>
+          <input
+            className="w-full rounded-xl border-gray-300 focus:ring-purple-500 focus:border-purple-500"
+            name="nombre"
+            placeholder="Ej: Camila Pérez"
+            value={form.nombre}
+            onChange={onChange}
+          />
+        </div>
+
+        {/* Campo Teléfono */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Teléfono *
+          </label>
+          <input
+            className="w-full rounded-xl border-gray-300 focus:ring-purple-500 focus:border-purple-500"
+            name="telefono"
+            placeholder="Ej: 300 123 4567"
+            value={form.telefono}
+            onChange={onChange}
+          />
+        </div>
       </div>
 
+      {/* Campo Correo */}
       <div>
-        <label className="text-sm font-semibold block mb-1">Teléfono *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Correo *
+        </label>
         <input
-          name="telefono"
-          value={form.telefono}
-          onChange={onChange}
-          placeholder="Ej: 300 123 4567"
-          className="w-full border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-morado"
-        />
-      </div>
-
-      <div>
-        <label className="text-sm font-semibold block mb-1">Correo *</label>
-        <input
+          className="w-full rounded-xl border-gray-300 focus:ring-purple-500 focus:border-purple-500"
           name="correo"
+          placeholder="Ej: camila@sena.edu.co"
           value={form.correo}
           onChange={onChange}
-          placeholder="Ej: ana@sena.edu.co"
-          className="w-full border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-morado"
         />
       </div>
 
-      {/* Campo empresa - actividad complementaria de la clase */}
+      {/* Campo Empresa - mini reto */}
       <div>
-        <label className="text-sm font-semibold block mb-1">Empresa</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Empresa
+        </label>
         <input
+          className="w-full rounded-xl border-gray-300 focus:ring-purple-500 focus:border-purple-500"
           name="empresa"
+          placeholder="Ej: SENA"
           value={form.empresa}
           onChange={onChange}
-          placeholder="Ej: SENA"
-          className="w-full border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-morado"
         />
       </div>
 
+      {/* Campo Etiqueta opcional */}
       <div>
-        <label className="text-sm font-semibold block mb-1">Etiqueta (opcional)</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Etiqueta (opcional)
+        </label>
         <input
+          className="w-full rounded-xl border-gray-300 focus:ring-purple-500 focus:border-purple-500"
           name="etiqueta"
+          placeholder="Ej: Trabajo"
           value={form.etiqueta}
           onChange={onChange}
-          placeholder="Ej: Trabajo"
-          className="w-full border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-morado"
         />
       </div>
 
-      {/* hover:bg-morado-oscuro: cambia el color al pasar el mouse | transition-colors: animación suave */}
+      {/* Botón de envío */}
       <button
         type="submit"
-        className="bg-morado hover:bg-morado-oscuro text-white py-2 rounded-md font-semibold transition-colors"
+        className="w-full md:w-auto bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-semibold shadow-sm transition-colors"
       >
         Agregar contacto
       </button>

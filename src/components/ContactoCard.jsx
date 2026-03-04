@@ -1,41 +1,49 @@
-export default function ContactoCard({ nombre, telefono, correo, empresa, etiqueta, onEliminar }) {
+// Componente que muestra la información de un contacto en una tarjeta
+export default function ContactoCard({ nombre, telefono, correo, etiqueta, empresa, onEliminar }) {
   return (
-    // bg-white: fondo blanco | border: borde fino | rounded-lg: esquinas redondeadas
-    // shadow-sm: sombra suave | p-4: padding | mb-4: margen inferior entre tarjetas
-    <article className="bg-white border rounded-lg shadow-sm p-4 mb-4">
+    <div className="bg-white shadow-sm border border-gray-200 rounded-2xl p-6 flex items-start justify-between">
 
-      {/* flex justify-between: separa el contenido del botón a los extremos */}
-      <div className="flex justify-between items-start">
+      {/* Información del contacto */}
+      <div className="space-y-1">
 
-        <div>
-          {/* Nombre del contacto en morado oscuro */}
-          <h3 className="text-lg font-semibold text-morado-oscuro">{nombre}</h3>
+        {/* Nombre */}
+        <h3 className="text-xl font-semibold text-gray-800">{nombre}</h3>
 
-          {/* Solo muestra la empresa si tiene valor */}
-          {empresa && (
-            <p className="text-sm text-gray-600">🏢 {empresa}</p>
-          )}
+        {/* Empresa si existe */}
+        {empresa && (
+          <p className="text-gray-600 text-sm flex items-center gap-2">
+            <span className="text-purple-500 text-lg">🏢</span>
+            {empresa}
+          </p>
+        )}
 
-          <p className="text-sm text-gray-600">📞 {telefono}</p>
-          <p className="text-sm text-gray-600">✉️ {correo}</p>
+        {/* Teléfono */}
+        <p className="text-gray-600 text-sm flex items-center gap-2">
+          <span className="text-purple-500 text-lg">📞</span>
+          {telefono}
+        </p>
 
-          {/* Solo muestra la etiqueta si tiene valor, como una pastilla de color */}
-          {etiqueta && (
-            <span className="inline-block mt-2 bg-morado text-white text-xs rounded px-2 py-1">
-              {etiqueta}
-            </span>
-          )}
-        </div>
+        {/* Correo */}
+        <p className="text-gray-600 text-sm flex items-center gap-2">
+          <span className="text-purple-500 text-lg">✉️</span>
+          {correo}
+        </p>
 
-        {/* Botón eliminar en rojo con hover más oscuro */}
-        <button
-          onClick={() => onEliminar(correo)} // Pasa el correo para identificar qué contacto eliminar
-          className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded-md transition-colors"
-        >
-          Eliminar
-        </button>
-
+        {/* Etiqueta como pastilla, solo si tiene valor */}
+        {etiqueta && (
+          <span className="inline-block bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full mt-2">
+            {etiqueta}
+          </span>
+        )}
       </div>
-    </article>
+
+      {/* Botón eliminar */}
+      <button
+        onClick={onEliminar}
+        className="bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 rounded-lg shadow transition"
+      >
+        Eliminar
+      </button>
+    </div>
   );
 }

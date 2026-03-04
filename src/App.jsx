@@ -1,64 +1,109 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+// Importamos las funciones que se comunican con la API
+import {
+  listarContactos,
+  crearContacto,
+  eliminarContactoPorId,
+} from "./api.js";
 import FormularioContacto from "./components/FormularioContacto";
 import ContactoCard from "./components/ContactoCard";
 
 export default function App() {
-  const contactosGuardados =
-    JSON.parse(localStorage.getItem("contactos")) || [];
+  // Estado que guarda el array de contactos
+  const [contactos, setContactos] = useState([]);
+  // Estado para mostrar un mensaje mientras carga la API
+  const [cargando, setCargando] = useState(true);
+  // Estado para mostrar mensajes de error si algo falla
+  const [error, setError] = useState("");
 
-  const [contactos, setContactos] = useState(contactosGuardados);
-  const [mostrar, setMostrar] = useState(false);
-
+  // useEffect se ejecuta una sola vez al montar el componente
   useEffect(() => {
-    localStorage.setItem("contactos", JSON.stringify(contactos));
-  }, [contactos]);
+    async function cargarContactos() {
+      try {
+        const data = await listarContactos(); // Petición GET a la API
+        setContactos(data);                   // Guardamos los contactos en el estado
+      } catch (error) {
+        console.error(error);
+        setError("No se pudo cargar la lista de contactos");
+      } finally {
+        setCargando(false); // Quitamos el mensaje de cargando pase lo que pase
+      }
+    }
 
-  const agregarContacto = (nuevo) => {
-    setContactos((prev) => [...prev, nuevo]);
+    cargarContactos();
+  }, []);
+
+  // Función para agregar un contacto usando POST
+  const agregarContacto = async (nuevo) => {
+    try {
+      const creado = await crearContacto(nuevo);
+      setContactos((prev) => [...prev, creado]);
+    } catch (error) {
+      console.error(error);
+      setError("No se pudo agregar el contacto");
+    }
   };
 
-  const eliminarContacto = (correo) => {
-    setContactos((prev) => prev.filter((c) => c.correo !== correo));
+  // Función para eliminar un contacto usando DELETE
+  const eliminarContacto = async (id) => {
+    try {
+      await eliminarContactoPorId(id);
+      setContactos((prev) => prev.filter((c) => c.id !== id));
+    } catch (error) {
+      console.error(error);
+      setError("No se pudo eliminar el contacto");
+    }
   };
 
   return (
-    <main className="max-w-2xl mx-auto mt-10 p-4">
-      <h1 className="text-3xl font-bold text-white text-center mb-2">
-        Agenda ADSO v4
-      </h1>
-      <p className="text-purple-200 text-center mb-2">
-        Interfaz moderna con TailwindCSS
-      </p>
-      <p className="bg-morado text-white text-xs rounded px-2 py-1 w-fit mx-auto mb-6">
-        ADSO
-      </p>
+    <main className="min-h-screen bg-gray-50">
+      <header className="max-w-6xl mx-auto px-6 pt-8">
+        <p className="text-sm font-semibold text-gray-400 tracking-[0.25em] uppercase">
+          Programa ADSO
+        </p>
+        <h1 className="text-4xl md:text-5xl font-black text-gray-900 mt-2">
+          Agenda ADSO v5
+        </h1>
+        <p className="text-gray-500 mt-1">
+          Gestión de contactos conectada a una API local con JSON Server.
+        </p>
+      </header>
 
-      <FormularioContacto onAgregar={agregarContacto} />
+      <section className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+        {/* Mensaje de error */}
+        {error && (
+          <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
 
-      <button
-        onClick={() => setMostrar(!mostrar)}
-        className="w-full bg-morado hover:bg-morado-oscuro text-white py-2 rounded-md font-semibold transition-colors mb-4"
-      >
-        {mostrar ? "Ocultar contactos" : `Contactos guardados (${contactos.length})`}
-      </button>
+        {/* Mensaje de carga */}
+        {cargando && (
+          <div className="rounded-xl bg-purple-50 border border-purple-200 px-4 py-3 text-sm text-purple-700">
+            Cargando contactos desde la API...
+          </div>
+        )}
 
-      {mostrar && (
-        <div>
-          {contactos.length === 0 ? (
-            <p className="text-center text-purple-200 mt-4">
-              No hay contactos guardados.
+        {/* Formulario */}
+        <FormularioContacto onAgregar={agregarContacto} />
+
+        {/* Lista de contactos */}
+        <div className="space-y-4">
+          {contactos.length === 0 && !cargando && (
+            <p className="text-gray-500 text-sm">
+              No hay contactos aún. Agrega el primero usando el formulario.
             </p>
-          ) : (
-            contactos.map((c) => (
-              <ContactoCard
-                key={c.correo}
-                {...c}
-                onEliminar={eliminarContacto}
-              />
-            ))
           )}
+
+          {contactos.map((c) => (
+            <ContactoCard
+              key={c.id}
+              {...c}
+              onEliminar={() => eliminarContacto(c.id)}
+            />
+          ))}
         </div>
-      )}
+      </section>
     </main>
   );
 }

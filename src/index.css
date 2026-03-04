@@ -1,17 +1,9 @@
+/* Activa las tres capas de Tailwind */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Estilos globales del body */
 body {
-  @apply text-gray-800 font-sans;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-  background-size: 400% 400%;
-  animation: gradiente 12s ease infinite;
-}
-
-@keyframes gradiente {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  @apply bg-gray-50 text-gray-800 font-sans;
 }
