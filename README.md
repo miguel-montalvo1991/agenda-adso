@@ -152,6 +152,9 @@ Registra Tailwind y Autoprefixer como plugins de PostCSS para que los estilos se
 - Mostrar mensajes de carga y error
 - Campo empresa como actividad complementaria
 - Diseño responsivo con TailwindCSS
+- Botón contador que muestra cuántos contactos hay guardados
+- Lista desplegable que se abre y cierra al hacer clic en el botón
+- Diseño glassmorphism con fondo animado degradado
 
 ---
 

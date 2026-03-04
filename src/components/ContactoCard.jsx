@@ -1,46 +1,34 @@
-// Componente que muestra la información de un contacto en una tarjeta
 export default function ContactoCard({ nombre, telefono, correo, etiqueta, empresa, onEliminar }) {
   return (
-    <div className="bg-white shadow-sm border border-gray-200 rounded-2xl p-6 flex items-start justify-between">
+    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl flex items-start justify-between">
 
-      {/* Información del contacto */}
       <div className="space-y-1">
+        <h3 className="text-xl font-bold text-white">{nombre}</h3>
 
-        {/* Nombre */}
-        <h3 className="text-xl font-semibold text-gray-800">{nombre}</h3>
-
-        {/* Empresa si existe */}
         {empresa && (
-          <p className="text-gray-600 text-sm flex items-center gap-2">
-            <span className="text-purple-500 text-lg">🏢</span>
-            {empresa}
+          <p className="text-purple-200 text-sm flex items-center gap-2">
+            <span>🏢</span>{empresa}
           </p>
         )}
 
-        {/* Teléfono */}
-        <p className="text-gray-600 text-sm flex items-center gap-2">
-          <span className="text-purple-500 text-lg">📞</span>
-          {telefono}
+        <p className="text-purple-200 text-sm flex items-center gap-2">
+          <span>📞</span>{telefono}
         </p>
 
-        {/* Correo */}
-        <p className="text-gray-600 text-sm flex items-center gap-2">
-          <span className="text-purple-500 text-lg">✉️</span>
-          {correo}
+        <p className="text-purple-200 text-sm flex items-center gap-2">
+          <span>✉️</span>{correo}
         </p>
 
-        {/* Etiqueta como pastilla, solo si tiene valor */}
         {etiqueta && (
-          <span className="inline-block bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full mt-2">
+          <span className="inline-block bg-purple-500/40 text-purple-100 text-xs px-3 py-1 rounded-full mt-2 border border-purple-400/30">
             {etiqueta}
           </span>
         )}
       </div>
 
-      {/* Botón eliminar */}
       <button
         onClick={onEliminar}
-        className="bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 rounded-lg shadow transition"
+        className="bg-red-500/80 hover:bg-red-500 text-white text-sm px-4 py-2 rounded-xl shadow transition-all"
       >
         Eliminar
       </button>
