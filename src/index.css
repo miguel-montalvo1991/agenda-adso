@@ -1,42 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 body {
-  font-family: sans-serif;
-  background-color: #f2f2f2;
-  color: #222;
-  margin: 0;
-  padding: 0;
-}
-
-a {
-  color: #008037;
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
-button {
-  background-color: #008037;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 14px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-button:hover {
-  background-color: #006b2f;
-}
-
-img {
-  max-width: 100%;
-  height: auto;
-}
-
-#root {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  @apply text-gray-800 font-sans;
   min-height: 100vh;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  background-size: 400% 400%;
+  animation: gradiente 12s ease infinite;
+}
+
+@keyframes gradiente {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
