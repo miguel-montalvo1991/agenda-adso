@@ -14,6 +14,14 @@
       "correo": "evilmonta1991@gmail.com",
       "etiqueta": "trabajo",
       "empresa": "impresos akagamy"
+    },
+    {
+      "id": "0dd4",
+      "nombre": "Davier Quinto",
+      "telefono": "6151665841",
+      "correo": "davierquinto@gmail.com",
+      "empresa": "",
+      "etiqueta": "desconocido"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"

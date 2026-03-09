@@ -1,5 +1,5 @@
 // URL base de la API local con JSON Server
-const API = "http://localhost:3002/contactos";
+const API = "http://localhost:3001/contactos";
 
 // GET: trae todos los contactos guardados en db.json
 export async function listarContactos() {
