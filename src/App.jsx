@@ -11,16 +11,23 @@ export default function App() {
   const [contactos, setContactos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
-  const [mostrar, setMostrar] = useState(false); // controla si se despliega la lista
+  const [mostrar, setMostrar] = useState(false);
 
   useEffect(() => {
     async function cargarContactos() {
       try {
+        setCargando(true);
+        setError(""); // Limpiamos errores anteriores antes de cargar
+
         const data = await listarContactos();
         setContactos(data);
       } catch (error) {
         console.error(error);
-        setError("No se pudo cargar la lista de contactos");
+
+        // Mensaje más claro y útil para el usuario en vez de un texto genérico
+        setError(
+          "No se pudieron cargar los contactos. Verifica que el servidor esté encendido e intenta de nuevo."
+        );
       } finally {
         setCargando(false);
       }
@@ -28,23 +35,40 @@ export default function App() {
     cargarContactos();
   }, []);
 
+  // Función async para agregar contacto
+  // Relanzamos el error para que el formulario también lo pueda manejar (estado enviando)
   const agregarContacto = async (nuevo) => {
     try {
+      setError(""); // Limpiamos el error antes de intentar guardar
+
       const creado = await crearContacto(nuevo);
       setContactos((prev) => [...prev, creado]);
     } catch (error) {
       console.error(error);
-      setError("No se pudo agregar el contacto");
+
+      // Mensaje amigable cuando falla guardar
+      setError(
+        "No se pudo guardar el contacto. Verifica tu conexión o el estado del servidor e intenta nuevamente."
+      );
+
+      // Relanzamos el error para que el formulario pueda apagar el estado enviando
+      throw error;
     }
   };
 
   const eliminarContacto = async (id) => {
     try {
+      setError(""); // Limpiamos errores previos
+
       await eliminarContactoPorId(id);
       setContactos((prev) => prev.filter((c) => c.id !== id));
     } catch (error) {
       console.error(error);
-      setError("No se pudo eliminar el contacto");
+
+      // Mensaje claro cuando falla eliminar
+      setError(
+        "No se pudo eliminar el contacto. Vuelve a intentarlo o verifica el servidor."
+      );
     }
   };
 
@@ -56,23 +80,24 @@ export default function App() {
           Programa ADSO
         </p>
         <h1 className="text-5xl font-black text-white mb-1">
-          Agenda ADSO v5
+          Agenda ADSO v6
         </h1>
         <p className="text-purple-200 text-sm">
-          Gestión de contactos conectada a una API local con JSON Server.
+          Gestión de contactos conectada a una API local con JSON Server,
+          ahora con validaciones y mejor experiencia de usuario.
         </p>
       </header>
 
       <section className="max-w-4xl mx-auto px-6 py-6 space-y-6">
 
-        {/* Mensaje de error */}
+        {/* Mensaje de error global - aparece cuando algo falla en la API */}
         {error && (
           <div className="rounded-2xl bg-red-500/20 border border-red-400/30 px-4 py-3 text-sm text-red-200">
             ⚠️ {error}
           </div>
         )}
 
-        {/* Mensaje de carga */}
+        {/* Mensaje de carga mientras espera la respuesta de la API */}
         {cargando && (
           <div className="rounded-2xl bg-purple-500/20 border border-purple-400/30 px-4 py-3 text-sm text-purple-200">
             ⏳ Cargando contactos desde la API...
@@ -101,7 +126,7 @@ export default function App() {
           </span>
         </button>
 
-        {/* Lista desplegable */}
+        {/* Lista desplegable de contactos */}
         {mostrar && (
           <div className="space-y-4">
             {contactos.length === 0 && !cargando ? (
