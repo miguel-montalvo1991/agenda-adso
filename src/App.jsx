@@ -3,7 +3,7 @@ import {
   listarContactos,
   crearContacto,
   eliminarContactoPorId,
-} from "./api.js";
+} from "./Semana2/api.js";
 import FormularioContacto from "./components/FormularioContacto";
 import ContactoCard from "./components/ContactoCard";
 
