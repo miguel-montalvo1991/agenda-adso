@@ -22,6 +22,22 @@
       "correo": "davierquinto@gmail.com",
       "empresa": "",
       "etiqueta": "desconocido"
+    },
+    {
+      "id": "8ad2",
+      "nombre": "yuri andrea henao",
+      "telefono": "3114388648",
+      "correo": "correayuriandrea90@gmail.com",
+      "empresa": "",
+      "etiqueta": "Amigo"
+    },
+    {
+      "id": "f49a",
+      "nombre": "manuela cordoba robledo",
+      "telefono": "3114055809",
+      "correo": "cordobarobledo@gmail.com",
+      "empresa": "",
+      "etiqueta": "estudio"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"
