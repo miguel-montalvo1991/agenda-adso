@@ -1,7 +1,7 @@
-# 📒 Agenda ADSO v5 – API REST con JSON Server
+# 📒 Agenda ADSO v8 – Búsqueda y Ordenamiento
 
 Proyecto desarrollado en el SENA CTMA como parte del programa de Análisis y Desarrollo de Software (ADSO).  
-Esta es la versión 5 de la Agenda ADSO, donde se integró JSON Server como API REST local para reemplazar el localStorage y conectar la aplicación a un backend simulado.
+Esta es la versión 8 de la Agenda ADSO, donde se implementaron funcionalidades de búsqueda en tiempo real y ordenamiento alfabético A–Z / Z–A para mejorar la experiencia del usuario al trabajar con listas de contactos extensas.
 
 ---
 
@@ -26,7 +26,8 @@ agenda-adso/
 ├── index.html
 └── src/
     ├── api.js                     ← funciones GET, POST y DELETE
-    ├── App.jsx                    ← componente principal
+    ├── config.js                  ← configuración global de la app (APP_INFO)
+    ├── App.jsx                    ← componente principal (actualizado v8)
     ├── main.jsx                   ← punto de entrada
     ├── index.css                  ← estilos globales con Tailwind
     └── components/
@@ -60,7 +61,7 @@ Luego abre en el navegador:
 
 ### `db.json`
 
-Es la base de datos local que usa JSON Server. Cada clave del objeto se convierte en un endpoint de la API. En este caso `contactos` queda disponible en `http://localhost:3002/contactos`.
+Base de datos local de JSON Server. El endpoint `contactos` queda disponible en `http://localhost:3002/contactos`.
 
 ```json
 {
@@ -80,7 +81,7 @@ Es la base de datos local que usa JSON Server. Cada clave del objeto se conviert
 
 ### `src/api.js`
 
-Centraliza todas las peticiones HTTP hacia la API. Separa la lógica de comunicación con el servidor de los componentes React.
+Centraliza todas las peticiones HTTP hacia la API. Separa la lógica de comunicación del servidor de los componentes React.
 
 - `listarContactos()` — hace un GET y retorna el array de contactos
 - `crearContacto(data)` — hace un POST con los datos del formulario
@@ -88,41 +89,51 @@ Centraliza todas las peticiones HTTP hacia la API. Separa la lógica de comunica
 
 ---
 
-### `src/App.jsx`
+### `src/config.js`
 
-Componente principal que maneja el estado global de la app y coordina las operaciones con la API.
+Archivo de configuración global. Exporta `APP_INFO` con los datos del proyecto (título, subtítulo, ficha, etc.) para no tener esos datos regados por todo el código.
 
-- `useState([])` — guarda la lista de contactos
-- `useState(true)` — controla el mensaje de carga
-- `useState("")` — guarda mensajes de error
-- `useEffect` — carga los contactos desde la API al iniciar la app
-- `agregarContacto` — llama a `crearContacto()` y actualiza el estado
-- `eliminarContacto` — llama a `eliminarContactoPorId()` y filtra el estado
+---
+
+### `src/App.jsx` ← actualizado en v8
+
+Componente principal. Maneja el estado global y ahora también incluye la lógica de búsqueda y ordenamiento.
+
+**Estados que maneja:**
+- `contactos` — lista de contactos cargada desde la API
+- `cargando` — controla el mensaje de carga inicial
+- `error` — guarda mensajes de error para mostrarle al usuario
+- `busqueda` *(nuevo v8)* — guarda el texto que escribe el usuario en el buscador
+- `ordenAsc` *(nuevo v8)* — controla si la lista va de A–Z (`true`) o Z–A (`false`)
+
+**Lógica nueva en v8:**
+- `contactosFiltrados` — aplica `.filter()` sobre `contactos` buscando el término en nombre, correo, teléfono y etiqueta
+- `contactosOrdenados` — aplica `.sort()` sobre `contactosFiltrados` usando el estado `ordenAsc`
+- El JSX ya no recorre `contactos` directamente, sino `contactosOrdenados`
 
 ---
 
 ### `src/components/FormularioContacto.jsx`
 
-Maneja el formulario para agregar nuevos contactos. Controla su propio estado local con los campos nombre, teléfono, correo, empresa y etiqueta.
+Formulario para agregar nuevos contactos. Controla su propio estado local con los campos nombre, teléfono, correo y etiqueta.
 
-- `onChange` — actualiza el campo correspondiente cada vez que el usuario escribe
+- `onChange` — actualiza el campo correspondiente mientras el usuario escribe
 - `onSubmit` — valida los campos obligatorios, llama al padre y limpia el formulario
-- El grid de 2 columnas se adapta automáticamente en móvil y escritorio con Tailwind
 
 ---
 
 ### `src/components/ContactoCard.jsx`
 
-Muestra la información de un contacto en una tarjeta. Recibe los datos como props y tiene un botón para eliminar que llama a la función del padre con el id del contacto.
+Muestra la información de un contacto en una tarjeta. Recibe los datos como props y tiene un botón eliminar que llama a la función del padre.
 
-- Solo muestra empresa y etiqueta si tienen valor
-- El botón eliminar pasa el id para identificar qué contacto borrar en la API
+- Solo muestra etiqueta si tiene valor
+- El botón eliminar identifica el contacto por su id
 
 ---
 
 ### `src/main.jsx`
 
-Punto de entrada de la app. Renderiza el componente `App` dentro del `div#root` del HTML e importa el CSS global con Tailwind.
+Punto de entrada de la app. Renderiza el componente `App` dentro del `div#root` e importa el CSS global con Tailwind.
 
 ---
 
@@ -134,13 +145,13 @@ Activa las tres capas de Tailwind y define los estilos globales del body.
 
 ### `tailwind.config.js`
 
-Configura Tailwind indicando dónde buscar las clases y define los colores personalizados del proyecto ADSO.
+Configura Tailwind indicando dónde buscar las clases y define los colores del proyecto ADSO.
 
 ---
 
 ### `postcss.config.js`
 
-Registra Tailwind y Autoprefixer como plugins de PostCSS para que los estilos se procesen correctamente.
+Registra Tailwind y Autoprefixer como plugins de PostCSS.
 
 ---
 
@@ -150,26 +161,23 @@ Registra Tailwind y Autoprefixer como plugins de PostCSS para que los estilos se
 - Agregar nuevos contactos desde el formulario (POST)
 - Eliminar contactos de la lista y la API (DELETE)
 - Mostrar mensajes de carga y error
-- Campo empresa como actividad complementaria
 - Diseño responsivo con TailwindCSS
-- Botón contador que muestra cuántos contactos hay guardados
-- Lista desplegable que se abre y cierra al hacer clic en el botón
-- Diseño glassmorphism con fondo animado degradado
+- **Buscador en tiempo real** por nombre, correo, teléfono y etiqueta *(nuevo v8)*
+- **Ordenamiento A–Z / Z–A** con botón para alternar *(nuevo v8)*
+- Mensaje cuando el filtro no encuentra resultados *(nuevo v8)*
+- **Contador de resultados** que muestra cuántos contactos coinciden con la búsqueda *(mini reto v8)*
 
 ---
 
-## 📸 Evidencias requeridas (Classroom)
 
-1. Captura de la terminal con JSON Server encendido
-2. Captura de la lista de contactos cargada desde la API
-3. Captura de un contacto agregado desde React
-4. Captura de un contacto eliminado correctamente
+---
+
 
 ---
 
 ## 👨‍💻 Autor
 
 Aprendiz SENA – ADSO  
-Ficha: ___  
+Ficha: 3229209
 Instructor: Gustavo Bolaños  
 Centro: CTMA – Regional Antioquia
