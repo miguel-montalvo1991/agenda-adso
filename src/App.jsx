@@ -1,61 +1,71 @@
 // Archivo: src/App.jsx
-// Componente principal de la Agenda ADSO v8.
-// Agrega búsqueda en tiempo real y ordenamiento alfabético a la lista de contactos.
+// Componente principal de la Agenda ADSO v9.
+// Maneja el estado global de la app y conecta todos los componentes.
+// Novedades v9: estado contactoEnEdicion + funciones para editar contactos.
 
 import { useEffect, useState } from "react";
 
+// Importamos todas las funciones de la API, incluyendo la nueva actualizarContacto
 import {
   listarContactos,
   crearContacto,
+  actualizarContacto,
   eliminarContactoPorId,
-} from "./api.js";
+} from "./api";
 
 import { APP_INFO } from "./config";
-
 import FormularioContacto from "./components/FormularioContacto";
 import ContactoCard from "./components/ContactoCard";
 
-export default function App() {
-  // Lista original de contactos que viene de la API - nunca la mutamos
+function App() {
+  // Lista de contactos cargada desde la API
   const [contactos, setContactos] = useState([]);
 
+  // Controla el mensaje de carga inicial
   const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
-  const [mostrar, setMostrar] = useState(false);
 
-  // Estado para el término de búsqueda que escribe el usuario
+  // Guarda mensajes de error para mostrarle al usuario
+  const [error, setError] = useState("");
+
+  // Texto que escribe el usuario en el buscador
   const [busqueda, setBusqueda] = useState("");
 
-  // Estado para el orden: true = A-Z, false = Z-A
+  // true = orden A-Z | false = orden Z-A
   const [ordenAsc, setOrdenAsc] = useState(true);
 
-  // Cargamos los contactos al montar el componente
+  // Contacto que se está editando actualmente
+  // Si es null, el formulario está en modo crear
+  const [contactoEnEdicion, setContactoEnEdicion] = useState(null);
+
+  // Cargamos los contactos una sola vez al montar el componente
   useEffect(() => {
-    async function cargarContactos() {
+    const cargarContactos = async () => {
       try {
         setCargando(true);
         setError("");
         const data = await listarContactos();
         setContactos(data);
       } catch (error) {
-        console.error(error);
+        console.error("Error al cargar contactos:", error);
         setError(
           "No se pudieron cargar los contactos. Verifica que el servidor esté encendido e intenta de nuevo."
         );
       } finally {
         setCargando(false);
       }
-    }
+    };
+
     cargarContactos();
   }, []);
 
-  const agregarContacto = async (nuevo) => {
+  // CREATE: agrega un nuevo contacto a la API y lo suma a la lista
+  const onAgregarContacto = async (nuevoContacto) => {
     try {
       setError("");
-      const creado = await crearContacto(nuevo);
+      const creado = await crearContacto(nuevoContacto);
       setContactos((prev) => [...prev, creado]);
     } catch (error) {
-      console.error(error);
+      console.error("Error al crear contacto:", error);
       setError(
         "No se pudo guardar el contacto. Verifica tu conexión o el estado del servidor e intenta nuevamente."
       );
@@ -63,149 +73,173 @@ export default function App() {
     }
   };
 
-  const eliminarContacto = async (id) => {
+  // UPDATE: actualiza el contacto en la API y reemplaza el registro en la lista
+  const onActualizarContacto = async (contactoActualizado) => {
+    try {
+      setError("");
+
+      // Llamamos a la API con el id y los datos nuevos
+      const actualizado = await actualizarContacto(
+        contactoActualizado.id,
+        contactoActualizado
+      );
+
+      // Recorremos la lista y reemplazamos solo el contacto que cambió
+      setContactos((prev) =>
+        prev.map((c) => (c.id === actualizado.id ? actualizado : c))
+      );
+
+      // Salimos del modo edición
+      setContactoEnEdicion(null);
+    } catch (error) {
+      console.error("Error al actualizar contacto:", error);
+      setError(
+        "No se pudo actualizar el contacto. Verifica tu conexión o el servidor e intenta nuevamente."
+      );
+      throw error;
+    }
+  };
+
+  // DELETE: elimina el contacto de la API y lo quita de la lista
+  const onEliminarContacto = async (id) => {
     try {
       setError("");
       await eliminarContactoPorId(id);
+
+      // Filtramos el contacto eliminado de la lista
       setContactos((prev) => prev.filter((c) => c.id !== id));
+
+      // Si el contacto eliminado estaba en edición, cancelamos la edición
+      setContactoEnEdicion((actual) =>
+        actual && actual.id === id ? null : actual
+      );
     } catch (error) {
-      console.error(error);
+      console.error("Error al eliminar contacto:", error);
       setError(
         "No se pudo eliminar el contacto. Vuelve a intentarlo o verifica el servidor."
       );
     }
   };
 
-  // Primera transformación: filtramos los contactos según el término de búsqueda
-  // Buscamos en nombre, correo, etiqueta Y teléfono (mini reto 1)
+  // Activa el modo edición cargando el contacto seleccionado
+  const onEditarClick = (contacto) => {
+    setContactoEnEdicion(contacto);
+    setError(""); // limpiamos errores previos al entrar a editar
+  };
+
+  // Cancela la edición y vuelve al modo crear
+  const onCancelarEdicion = () => {
+    setContactoEnEdicion(null);
+  };
+
+  // ── BÚSQUEDA Y ORDENAMIENTO (heredado de v8) ──────────────────────────────
+
+  // 1. Filtramos por el término de búsqueda en nombre, correo y etiqueta
   const contactosFiltrados = contactos.filter((c) => {
     const termino = busqueda.toLowerCase();
-
-    // Normalizamos todo a minúsculas para búsquedas sin importar mayúsculas
-    const nombre = c.nombre.toLowerCase();
-    const correo = c.correo.toLowerCase();
-    const etiqueta = (c.etiqueta || "").toLowerCase();
-    const telefono = (c.telefono || "").toLowerCase(); // mini reto 1
-
-    // El contacto se incluye si el término aparece en cualquiera de los campos
     return (
-      nombre.includes(termino) ||
-      correo.includes(termino) ||
-      etiqueta.includes(termino) ||
-      telefono.includes(termino) // mini reto 1
+      c.nombre.toLowerCase().includes(termino) ||
+      c.correo.toLowerCase().includes(termino) ||
+      (c.etiqueta || "").toLowerCase().includes(termino)
     );
   });
 
-  // Segunda transformación: ordenamos los contactos filtrados alfabéticamente
-  // Usamos spread [...] para no mutar el array original - buena práctica React
+  // 2. Ordenamos los resultados filtrados por nombre
   const contactosOrdenados = [...contactosFiltrados].sort((a, b) => {
     const nombreA = a.nombre.toLowerCase();
     const nombreB = b.nombre.toLowerCase();
-
     if (nombreA < nombreB) return ordenAsc ? -1 : 1;
     if (nombreA > nombreB) return ordenAsc ? 1 : -1;
     return 0;
   });
 
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto px-4 py-8">
 
-      {/* Encabezado usando APP_INFO desde config.js */}
-      <header className="max-w-4xl mx-auto px-6 pt-10 pb-4">
-        <p className="text-xs font-bold text-purple-300 tracking-[0.3em] uppercase mb-2">
-          Programa ADSO
-        </p>
-        <h1 className="text-5xl font-black text-white mb-1">
-          {APP_INFO.titulo}
-        </h1>
-        <p className="text-purple-200 text-sm">
-          {APP_INFO.subtitulo}
-        </p>
-      </header>
-
-      <section className="max-w-4xl mx-auto px-6 py-6 space-y-6">
+        {/* Encabezado */}
+        <header className="mb-8">
+          <p className="text-xs tracking-[0.3em] text-gray-500 uppercase">
+            Desarrollo Web ReactJS Ficha {APP_INFO.ficha}
+          </p>
+          <h1 className="text-4xl font-extrabold text-gray-900 mt-2">
+            {APP_INFO.titulo}
+          </h1>
+          <p className="text-sm text-gray-600 mt-1">{APP_INFO.subtitulo}</p>
+        </header>
 
         {/* Mensaje de error global */}
         {error && (
-          <div className="rounded-2xl bg-red-500/20 border border-red-400/30 px-4 py-3 text-sm text-red-200">
-            ⚠️ {error}
+          <div className="mb-4 rounded-xl bg-red-50 border border-red-200 px-4 py-3">
+            <p className="text-sm font-medium text-red-700">{error}</p>
           </div>
         )}
 
-        {/* Mensaje de carga */}
-        {cargando && (
-          <div className="rounded-2xl bg-purple-500/20 border border-purple-400/30 px-4 py-3 text-sm text-purple-200">
-            ⏳ Cargando contactos desde la API...
-          </div>
-        )}
+        {cargando ? (
+          <p className="text-sm text-gray-500">Cargando contactos...</p>
+        ) : (
+          <>
+            {/* Formulario: recibe el contacto en edición y los handlers */}
+            <FormularioContacto
+              onAgregar={onAgregarContacto}
+              onActualizar={onActualizarContacto}
+              contactoEnEdicion={contactoEnEdicion}
+              onCancelarEdicion={onCancelarEdicion}
+            />
 
-        {/* Formulario con efecto cristal */}
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl">
-          <h2 className="text-white font-bold text-lg mb-4">➕ Nuevo contacto</h2>
-          <FormularioContacto onAgregar={agregarContacto} />
-        </div>
-
-        {/* Botón contador desplegable */}
-        <button
-          onClick={() => setMostrar(!mostrar)}
-          className="w-full flex items-center justify-between bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white px-6 py-4 rounded-2xl font-semibold shadow-xl transition-all"
-        >
-          <span className="flex items-center gap-3">
-            <span className="bg-purple-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-              {contactos.length}
-            </span>
-            Contactos guardados
-          </span>
-          <span className="text-purple-300 text-xl">
-            {mostrar ? "▲" : "▼"}
-          </span>
-        </button>
-
-        {/* Lista desplegable con búsqueda y ordenamiento */}
-        {mostrar && (
-          <div className="space-y-4">
-
-            {/* Buscador y botón de ordenamiento */}
+            {/* Buscador y botón de orden */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
               <input
                 type="text"
-                className="w-full md:flex-1 bg-white/10 text-white placeholder-white/40 border border-white/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-                placeholder="Buscar por nombre, correo, etiqueta o teléfono..."
+                className="w-full md:flex-1 rounded-xl border-gray-300 focus:ring-purple-500 focus:border-purple-500 text-sm"
+                placeholder="Buscar por nombre, correo o etiqueta..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
               />
               <button
                 type="button"
                 onClick={() => setOrdenAsc((prev) => !prev)}
-                className="bg-white/10 hover:bg-white/20 text-white text-sm px-4 py-3 rounded-xl border border-white/20 transition-all font-semibold"
+                className="bg-gray-100 text-gray-700 text-sm px-4 py-2 rounded-xl border border-gray-200 hover:bg-gray-200"
               >
                 {ordenAsc ? "Ordenar Z-A" : "Ordenar A-Z"}
               </button>
             </div>
 
-            {/* Mini reto 2: contador de resultados con gramática correcta */}
-            <p className="text-purple-300 text-xs">
-              Mostrando {contactosOrdenados.length}{" "}
-              {contactosOrdenados.length === 1 ? "contacto" : "contactos"}
-            </p>
-
-            {/* Lista de contactos filtrados y ordenados */}
-            {contactosOrdenados.length === 0 ? (
-              <p className="text-purple-200 text-sm text-center py-4">
-                No se encontraron contactos que coincidan con la búsqueda.
-              </p>
-            ) : (
-              contactosOrdenados.map((c) => (
-                <ContactoCard
-                  key={c.id}
-                  {...c}
-                  onEliminar={() => eliminarContacto(c.id)}
-                />
-              ))
-            )}
-          </div>
+            {/* Lista de contactos */}
+            <section className="space-y-4">
+              {contactosOrdenados.length === 0 ? (
+                <p className="text-sm text-gray-500">
+                  No se encontraron contactos que coincidan con la búsqueda.
+                </p>
+              ) : (
+                contactosOrdenados.map((c) => (
+                  <ContactoCard
+                    key={c.id}
+                    nombre={c.nombre}
+                    telefono={c.telefono}
+                    correo={c.correo}
+                    etiqueta={c.etiqueta}
+                    onEliminar={() => onEliminarContacto(c.id)}
+                    onEditar={() => onEditarClick(c)} // nuevo en v9
+                  />
+                ))
+              )}
+            </section>
+          </>
         )}
-      </section>
-    </main>
+
+        {/* Pie de página */}
+        <footer className="mt-8 text-xs text-gray-400">
+          <p>Desarrollo Web – ReactJS | Proyecto Agenda ADSO</p>
+          <p>Instructor: Gustavo Adolfo Bolaños Dorado</p>
+        </footer>
+      </div>
+    </div>
   );
 }
+
+export default App;
+```
+
+**Commit:**
+```
