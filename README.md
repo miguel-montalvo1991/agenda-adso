@@ -1,8 +1,17 @@
-# 📒 Agenda ADSO v10 – Versión PRO conectada a Render
+# 📒 Agenda ADSO v11 – Login y rutas protegidas
 
 Proyecto desarrollado en el SENA CTMA como parte del programa de Análisis y Desarrollo de Software (ADSO).  
-Esta es la versión 10 de la Agenda ADSO, con un layout tipo dashboard, dos vistas diferenciadas y conexión
-a una API REST desplegada en la nube con Render.
+Esta versión agrega un sistema básico de autenticación con pantalla de login, manejo de sesión y rutas protegidas usando Context API y React Router.
+
+---
+
+## ⚠️ Nota de seguridad
+
+El sistema de login implementado es únicamente pedagógico. En aplicaciones reales se utilizan:
+- JWT (JSON Web Token)
+- bcrypt para cifrado de contraseñas
+- Validación de credenciales en el backend
+- Control de sesiones seguro
 
 ---
 
@@ -10,17 +19,17 @@ a una API REST desplegada en la nube con Render.
 
 - React con Vite
 - TailwindCSS v3.4.13
-- JSON Server v0.17.4 (backend separado)
+- React Router DOM
+- Context API
+- JSON Server (backend en Render)
 - Fetch API (nativa de JavaScript)
 - JavaScript (ES6+)
-- Render (deploy del backend)
 
 ---
 
 ## 📁 Estructura del proyecto
 ```
 agenda-adso/
-├── db.json                        ← ya no se usa localmente, la API está en Render
 ├── package.json
 ├── tailwind.config.js
 ├── postcss.config.js
@@ -28,10 +37,15 @@ agenda-adso/
 └── src/
     ├── api.js                     ← funciones GET, POST, PUT y DELETE
     ├── config.js                  ← URL de la API remota y configuración global
-    ├── App.jsx                    ← componente principal con dashboard v10
-    ├── main.jsx                   ← punto de entrada
+    ├── App.jsx                    ← rutas y componente Dashboard
+    ├── main.jsx                   ← punto de entrada con BrowserRouter y AuthProvider
     ├── index.css                  ← estilos globales con Tailwind
+    ├── context/
+    │   └── AuthContext.jsx        ← contexto de autenticación (login, logout, isAuthenticated)
+    ├── pages/
+    │   └── Login.jsx              ← pantalla de login
     └── components/
+        ├── ProtectedRoute.jsx     ← protege rutas privadas
         ├── FormularioContacto.jsx ← formulario para crear y editar contactos
         └── ContactoCard.jsx       ← tarjeta de cada contacto con botón Editar
 ```
@@ -39,8 +53,6 @@ agenda-adso/
 ---
 
 ## 🚀 Cómo correr el proyecto
-
-Como el backend ya está desplegado en Render, solo se necesita una terminal:
 ```bash
 npm install
 npm run dev
@@ -51,7 +63,16 @@ Luego abre en el navegador:
 http://localhost:5173
 ```
 
-> Ya no es necesario correr JSON Server en local. La app consume la API remota directamente.
+La app redirige automáticamente al login si no hay sesión activa.
+
+---
+
+## 🔐 Credenciales de prueba
+
+| Campo | Valor |
+|---|---|
+| Correo | admin@sena.com |
+| Contraseña | 1234 |
 
 ---
 
@@ -65,63 +86,52 @@ Repositorio del backend:
 
 ---
 
-## 📄 Explicación de cada archivo
+## 📄 Explicación de cada archivo nuevo
 
-### `src/config.js`
+### `src/context/AuthContext.jsx`
 
-Centraliza la configuración global de la app. Exporta `API_BASE_URL` apuntando a la API en Render y `APP_INFO` con los datos del proyecto.
+Maneja el estado de autenticación de toda la aplicación usando Context API.
 
-### `src/api.js`
+- `isAuthenticated` — indica si el usuario está autenticado
+- `login()` — guarda la sesión en localStorage y actualiza el estado
+- `logout()` — elimina la sesión de localStorage y actualiza el estado
+- `useAuth()` — hook personalizado para consumir el contexto fácilmente
 
-Centraliza todas las peticiones HTTP. Ningún componente llama directamente a fetch.
+### `src/pages/Login.jsx`
 
-- `listarContactos()` — GET, retorna el array de contactos
-- `crearContacto(data)` — POST, crea un nuevo contacto
-- `actualizarContacto(id, data)` — PUT, actualiza un contacto por id
-- `eliminarContactoPorId(id)` — DELETE, elimina un contacto por id
+Pantalla de login con diseño consistente con el dashboard. Valida las credenciales y redirige al dashboard si son correctas. Muestra mensaje de error si las credenciales son incorrectas.
 
-### `src/App.jsx` ← versión PRO v10
+### `src/components/ProtectedRoute.jsx`
 
-Componente principal con layout tipo dashboard.
+Componente que protege rutas privadas. Si el usuario no está autenticado lo redirige a `/login`. Si sí está autenticado renderiza el componente hijo normalmente.
 
-**Estados que maneja:**
-- `contactos` — lista de contactos cargada desde la API
-- `cargando` — controla el mensaje de carga inicial
-- `error` — mensajes de error para el usuario
-- `busqueda` — texto del buscador
-- `ordenAsc` — orden A–Z o Z–A
-- `contactoEnEdicion` — contacto en modo edición o null
-- `vista` — vista activa: `"crear"` o `"contactos"`
+### `src/main.jsx`
 
-**Layout:**
-- Barra superior con nombre de la app y ficha
-- Columna izquierda: contenido principal según la vista activa
-- Columna derecha: panel lateral con estadísticas, tips y mensaje motivacional
+Envuelve la app con `BrowserRouter` para habilitar el sistema de rutas y con `AuthProvider` para compartir el estado de autenticación en toda la aplicación.
 
-### `src/components/FormularioContacto.jsx`
+### `src/App.jsx`
 
-Formulario reutilizable con dos modos: crear y editar. El `useEffect` detecta el cambio de `contactoEnEdicion` y actualiza los campos automáticamente.
+Define las rutas de la aplicación y separa el Dashboard en su propio componente interno.
 
-### `src/components/ContactoCard.jsx`
-
-Tarjeta de cada contacto con botones Editar y Eliminar.
+- `/login` — ruta pública, pantalla de login
+- `/` — ruta protegida con `ProtectedRoute`, muestra el Dashboard
 
 ---
 
 ## ✅ Funcionalidades
 
+- Login con validación de credenciales
+- Manejo de sesión con localStorage
+- Rutas protegidas con React Router y Context API
+- Botón de cerrar sesión en la barra superior
+- Redirección automática al login si no hay sesión
 - Cargar contactos desde la API remota en Render (GET)
-- Agregar nuevos contactos desde el formulario (POST)
-- Editar contactos existentes en modo edición (PUT)
-- Eliminar contactos de la lista y la API (DELETE)
-- Cancelar la edición y volver al modo crear
-- Mensajes de carga y error
-- Diseño responsivo con TailwindCSS
-- Buscador en tiempo real por nombre, correo y etiqueta
+- Agregar nuevos contactos (POST)
+- Editar contactos existentes (PUT)
+- Eliminar contactos (DELETE)
+- Buscador en tiempo real
 - Ordenamiento A–Z / Z–A
-- Contador de resultados
 - Layout tipo dashboard con panel lateral
-- Vista "Crear contacto" y vista "Ver contactos"
 
 ---
 
@@ -138,7 +148,12 @@ Tarjeta de cada contacto con botones Editar y Eliminar.
 | v8 | Búsqueda y ordenamiento |
 | v9 | Edición de contactos (CRUD completo) |
 | v10 | Dashboard PRO con dos vistas y API en Render |
+| v11 | Login, Context API y rutas protegidas |
+
+---
 
 
 
 
+```
+docs(README): actualizar documentación a v11 con login y rutas protegidas - Clase 13
