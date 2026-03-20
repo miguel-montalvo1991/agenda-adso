@@ -5,7 +5,7 @@
 
 // URL base del backend local de Agenda ADSO.
 // Si cambia el puerto o la ruta, solo se modifica en esta línea.
-export const API_BASE_URL = "http://localhost:3001/contactos";
+export const API_BASE_URL = "http://localhost:3002/contactos";
 
 // Información general de la aplicación que se utiliza en App.jsx
 // Centralizar esto evita tener textos "quemados" en varios archivos
