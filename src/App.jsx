@@ -1,11 +1,12 @@
 // Archivo: src/App.jsx
-// Versión PRO de la Agenda ADSO v10.
-// Novedades: layout tipo dashboard con dos vistas separadas.
-// - Vista "crear": solo el formulario para agregar contactos.
-// - Vista "contactos": lista, búsqueda, ordenamiento y edición.
-// La lógica de negocio (api.js, FormularioContacto, ContactoCard) no se toca.
+// Versión PRO de la Agenda ADSO v10 con autenticación y rutas protegidas.
+// Novedades Clase 13:
+// - Ruta /login para la pantalla de login
+// - Ruta / protegida con ProtectedRoute
+// - Botón de cerrar sesión en la barra superior
 
 import { useEffect, useState } from "react";
+import { Routes, Route } from "react-router-dom";
 import {
   listarContactos,
   crearContacto,
@@ -13,33 +14,38 @@ import {
   eliminarContactoPorId,
 } from "./api";
 import { APP_INFO } from "./config";
+import { useAuth } from "./context/AuthContext";
 import FormularioContacto from "./components/FormularioContacto";
 import ContactoCard from "./components/ContactoCard";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Login from "./pages/Login";
 
-function App() {
-  // Lista de contactos cargada desde la API
+function Dashboard() {
+  // Estado con todos los contactos obtenidos desde la API
   const [contactos, setContactos] = useState([]);
 
-  // Controla el mensaje de carga inicial
+  // Estado de carga mientras se consulta la API
   const [cargando, setCargando] = useState(true);
 
-  // Mensajes de error globales
+  // Estado para mostrar mensajes de error globales
   const [error, setError] = useState("");
 
-  // Texto del buscador (solo se usa en vista "contactos")
+  // Estado del término de búsqueda
   const [busqueda, setBusqueda] = useState("");
 
-  // true = A-Z | false = Z-A
+  // Estado del orden: true = A-Z, false = Z-A
   const [ordenAsc, setOrdenAsc] = useState(true);
 
-  // Contacto que se está editando, o null si no hay edición activa
+  // Estado del contacto en edición
   const [contactoEnEdicion, setContactoEnEdicion] = useState(null);
 
-  // Vista activa: "crear" o "contactos"
-  // Arrancamos en "crear" para que el formulario sea lo primero que se ve
+  // Estado de la vista activa: "crear" o "contactos"
   const [vista, setVista] = useState("crear");
 
-  // Cargamos los contactos una sola vez al montar el componente
+  // Obtenemos la función logout del contexto
+  const { logout } = useAuth();
+
+  // Cargamos los contactos al montar el componente
   useEffect(() => {
     const cargarContactos = async () => {
       try {
@@ -56,11 +62,10 @@ function App() {
         setCargando(false);
       }
     };
-
     cargarContactos();
   }, []);
 
-  // CREATE: crea un contacto en la API y lo agrega al estado local
+  // CREATE
   const onAgregarContacto = async (nuevoContacto) => {
     try {
       setError("");
@@ -68,14 +73,12 @@ function App() {
       setContactos((prev) => [...prev, creado]);
     } catch (error) {
       console.error("Error al crear contacto:", error);
-      setError(
-        "No se pudo guardar el contacto. Verifica tu conexión o el estado del servidor e intenta nuevamente."
-      );
+      setError("No se pudo guardar el contacto. Verifica tu conexión e intenta nuevamente.");
       throw error;
     }
   };
 
-  // UPDATE: actualiza el contacto en la API y reemplaza el registro en la lista
+  // UPDATE
   const onActualizarContacto = async (contactoActualizado) => {
     try {
       setError("");
@@ -83,63 +86,57 @@ function App() {
         contactoActualizado.id,
         contactoActualizado
       );
-      // Reemplazamos solo el contacto que cambió, los demás quedan igual
       setContactos((prev) =>
         prev.map((c) => (c.id === actualizado.id ? actualizado : c))
       );
-      setContactoEnEdicion(null); // salimos del modo edición
+      setContactoEnEdicion(null);
     } catch (error) {
       console.error("Error al actualizar contacto:", error);
-      setError(
-        "No se pudo actualizar el contacto. Verifica tu conexión o el servidor e intenta nuevamente."
-      );
+      setError("No se pudo actualizar el contacto. Intenta nuevamente.");
       throw error;
     }
   };
 
-  // DELETE: elimina el contacto de la API y lo quita del estado local
+  // DELETE
   const onEliminarContacto = async (id) => {
     try {
       setError("");
       await eliminarContactoPorId(id);
       setContactos((prev) => prev.filter((c) => c.id !== id));
-      // Si el contacto eliminado estaba en edición, cancelamos la edición
       setContactoEnEdicion((actual) =>
         actual && actual.id === id ? null : actual
       );
     } catch (error) {
       console.error("Error al eliminar contacto:", error);
-      setError(
-        "No se pudo eliminar el contacto. Vuelve a intentarlo o verifica el servidor."
-      );
+      setError("No se pudo eliminar el contacto. Intenta nuevamente.");
     }
   };
 
-  // Activa el modo edición con el contacto seleccionado
+  // Activa modo edición
   const onEditarClick = (contacto) => {
     setContactoEnEdicion(contacto);
     setError("");
   };
 
-  // Cancela la edición y vuelve al modo crear dentro de la vista contactos
+  // Cancela edición
   const onCancelarEdicion = () => {
     setContactoEnEdicion(null);
   };
 
-  // Cambia a la vista "contactos" y limpia cualquier edición activa
+  // Cambia a vista contactos
   const irAVerContactos = () => {
     setVista("contactos");
     setContactoEnEdicion(null);
   };
 
-  // Vuelve a la vista "crear" y limpia búsqueda y edición
+  // Vuelve a vista crear
   const irACrearContacto = () => {
     setVista("crear");
     setContactoEnEdicion(null);
     setBusqueda("");
   };
 
-  // Filtramos los contactos según el término de búsqueda
+  // Filtrado por búsqueda
   const contactosFiltrados = contactos.filter((c) => {
     const termino = busqueda.toLowerCase();
     return (
@@ -149,7 +146,7 @@ function App() {
     );
   });
 
-  // Ordenamos los contactos filtrados por nombre
+  // Ordenamiento
   const contactosOrdenados = [...contactosFiltrados].sort((a, b) => {
     const nombreA = a.nombre.toLowerCase();
     const nombreB = b.nombre.toLowerCase();
@@ -158,7 +155,6 @@ function App() {
     return 0;
   });
 
-  // Variables auxiliares para el renderizado condicional
   const estaEnVistaCrear = vista === "crear";
   const estaEnVistaContactos = vista === "contactos";
 
@@ -169,7 +165,6 @@ function App() {
       <header className="border-b border-slate-800 bg-slate-950/60 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* Ícono de la app */}
             <div className="h-9 w-9 rounded-2xl bg-purple-600 flex items-center justify-center text-white text-lg font-bold shadow-md">
               A
             </div>
@@ -183,23 +178,32 @@ function App() {
             </div>
           </div>
 
-          <div className="text-right">
-            <p className="text-[10px] uppercase tracking-[0.25em] text-slate-400">
-              SENA CTMA
-            </p>
-            <p className="text-xs text-slate-200">Ficha {APP_INFO.ficha}</p>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-slate-400">
+                SENA CTMA
+              </p>
+              <p className="text-xs text-slate-200">Ficha {APP_INFO.ficha}</p>
+            </div>
+
+            {/* Botón cerrar sesión - nuevo en Clase 13 */}
+            <button
+              type="button"
+              onClick={logout}
+              className="text-xs px-3 py-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800"
+            >
+              Cerrar sesión
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Contenido principal: grid de 2 columnas en pantallas medianas */}
+      {/* Contenido principal */}
       <main className="max-w-6xl mx-auto px-4 py-8 md:py-10 pb-14">
         <div className="grid gap-8 md:grid-cols-[1.6fr,1fr] items-start">
 
-          {/* COLUMNA IZQUIERDA: tarjeta principal que cambia según la vista */}
+          {/* Columna izquierda */}
           <div className="bg-white/95 rounded-3xl shadow-2xl border border-slate-100 px-6 py-7 md:px-8 md:py-8">
-
-            {/* Encabezado de la tarjeta */}
             <header className="mb-5 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900">
@@ -208,8 +212,6 @@ function App() {
                 <p className="text-sm text-gray-600 mt-1">
                   {APP_INFO.subtitulo}
                 </p>
-
-                {/* Indicador de conexión con contador de contactos */}
                 <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-purple-50 px-3 py-1 border border-purple-100">
                   <span className="h-2 w-2 rounded-full bg-green-500" />
                   <span className="text-xs font-medium text-purple-800">
@@ -219,7 +221,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Botón para cambiar de vista */}
               <div className="flex flex-col items-end gap-2">
                 <span className="text-[11px] uppercase tracking-[0.16em] text-gray-400">
                   {estaEnVistaCrear ? "Modo creación" : "Modo contactos"}
@@ -244,19 +245,16 @@ function App() {
               </div>
             </header>
 
-            {/* Mensaje de error global */}
             {error && (
               <div className="mb-4 rounded-xl bg-red-50 border border-red-200 px-4 py-3">
                 <p className="text-sm font-medium text-red-700">{error}</p>
               </div>
             )}
 
-            {/* Contenido según la vista activa */}
             {cargando ? (
               <p className="text-sm text-gray-500">Cargando contactos...</p>
             ) : (
               <>
-                {/* VISTA CREAR: solo el formulario, sin edición */}
                 {estaEnVistaCrear && (
                   <FormularioContacto
                     onAgregar={onAgregarContacto}
@@ -266,10 +264,8 @@ function App() {
                   />
                 )}
 
-                {/* VISTA CONTACTOS: edición (si hay), buscador y lista */}
                 {estaEnVistaContactos && (
                   <>
-                    {/* Formulario en modo edición, solo si hay un contacto seleccionado */}
                     {contactoEnEdicion && (
                       <div className="mb-4">
                         <FormularioContacto
@@ -281,7 +277,6 @@ function App() {
                       </div>
                     )}
 
-                    {/* Buscador, contador y botón de orden */}
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
                       <div className="flex-1">
                         <input
@@ -291,14 +286,12 @@ function App() {
                           value={busqueda}
                           onChange={(e) => setBusqueda(e.target.value)}
                         />
-                        {/* Contador de resultados */}
                         <p className="mt-1 text-[11px] text-gray-500">
                           Mostrando {contactosOrdenados.length} de{" "}
                           {contactos.length} contacto
                           {contactos.length !== 1 && "s"}
                         </p>
                       </div>
-
                       <button
                         type="button"
                         onClick={() => setOrdenAsc((prev) => !prev)}
@@ -308,7 +301,6 @@ function App() {
                       </button>
                     </div>
 
-                    {/* Lista de contactos */}
                     <section className="space-y-3 md:space-y-4">
                       {contactosOrdenados.length === 0 ? (
                         <p className="text-sm text-gray-500">
@@ -334,10 +326,8 @@ function App() {
             )}
           </div>
 
-          {/* COLUMNA DERECHA: panel lateral, igual en ambas vistas */}
+          {/* Columna derecha: panel lateral */}
           <aside className="space-y-4 md:space-y-5">
-
-            {/* Banner principal morado */}
             <div className="rounded-3xl bg-gradient-to-br from-purple-600 to-purple-800 text-white p-6 shadow-xl flex flex-col justify-between min-h-[220px]">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.3em] text-purple-100/80">
@@ -351,7 +341,6 @@ function App() {
                   ordenamiento y edición.
                 </p>
               </div>
-
               <div className="mt-6 space-y-2 text-sm">
                 <p className="flex items-center justify-between">
                   <span className="text-purple-100">Contactos registrados</span>
@@ -366,7 +355,6 @@ function App() {
               </div>
             </div>
 
-            {/* Tips de código limpio */}
             <div className="rounded-2xl bg-white/90 border border-slate-100 p-4 shadow-sm">
               <h3 className="text-sm font-semibold text-gray-900">
                 Tips de código limpio
@@ -379,7 +367,6 @@ function App() {
               </ul>
             </div>
 
-            {/* Tarjeta motivacional */}
             <div className="rounded-2xl bg-slate-900 border border-slate-700 p-4 text-slate-100 shadow-sm">
               <p className="text-[10px] uppercase tracking-[0.3em] text-slate-400">
                 SENA CTMA · ADSO
@@ -400,7 +387,25 @@ function App() {
   );
 }
 
+function App() {
+  return (
+    <Routes>
+      {/* Ruta pública: pantalla de login */}
+      <Route path="/login" element={<Login />} />
+
+      {/* Ruta protegida: solo accesible si está autenticado */}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
+  );
+}
+
 export default App;
 
-
-
+feat(App): agregar rutas protegidas y botón cerrar sesión - Clase 13
