@@ -1,7 +1,8 @@
-# 📒 Agenda ADSO v8 – Búsqueda y Ordenamiento
+# 📒 Agenda ADSO v9 – Edición de contactos y cierre del ABP
 
 Proyecto desarrollado en el SENA CTMA como parte del programa de Análisis y Desarrollo de Software (ADSO).  
-Esta es la versión 8 de la Agenda ADSO, donde se implementaron funcionalidades de búsqueda en tiempo real y ordenamiento alfabético A–Z / Z–A para mejorar la experiencia del usuario al trabajar con listas de contactos extensas.
+Esta es la versión 9 de la Agenda ADSO, donde se implementó la funcionalidad de edición de contactos,
+completando así el flujo CRUD completo: crear, leer, actualizar y eliminar contactos desde una API REST con JSON Server.
 
 ---
 
@@ -16,7 +17,6 @@ Esta es la versión 8 de la Agenda ADSO, donde se implementaron funcionalidades 
 ---
 
 ## 📁 Estructura del proyecto
-
 ```
 agenda-adso/
 ├── db.json                        ← base de datos local de JSON Server
@@ -25,14 +25,14 @@ agenda-adso/
 ├── postcss.config.js
 ├── index.html
 └── src/
-    ├── api.js                     ← funciones GET, POST y DELETE
+    ├── api.js                     ← funciones GET, POST, PUT y DELETE
     ├── config.js                  ← configuración global de la app (APP_INFO)
-    ├── App.jsx                    ← componente principal (actualizado v8)
+    ├── App.jsx                    ← componente principal (actualizado v9)
     ├── main.jsx                   ← punto de entrada
     ├── index.css                  ← estilos globales con Tailwind
     └── components/
-        ├── FormularioContacto.jsx ← formulario para agregar contactos
-        └── ContactoCard.jsx       ← tarjeta de cada contacto
+        ├── FormularioContacto.jsx ← formulario para crear y editar contactos
+        └── ContactoCard.jsx       ← tarjeta de cada contacto con botón Editar
 ```
 
 ---
@@ -62,7 +62,6 @@ Luego abre en el navegador:
 ### `db.json`
 
 Base de datos local de JSON Server. El endpoint `contactos` queda disponible en `http://localhost:3002/contactos`.
-
 ```json
 {
   "contactos": [
@@ -81,59 +80,63 @@ Base de datos local de JSON Server. El endpoint `contactos` queda disponible en 
 
 ### `src/api.js`
 
-Centraliza todas las peticiones HTTP hacia la API. Separa la lógica de comunicación del servidor de los componentes React.
+Centraliza todas las peticiones HTTP hacia la API. Ningún componente llama directamente a fetch.
 
-- `listarContactos()` — hace un GET y retorna el array de contactos
-- `crearContacto(data)` — hace un POST con los datos del formulario
-- `eliminarContactoPorId(id)` — hace un DELETE al endpoint con el id específico
+- `listarContactos()` — GET, retorna el array de contactos
+- `crearContacto(data)` — POST, crea un nuevo contacto
+- `actualizarContacto(id, data)` — PUT, actualiza un contacto existente por id *(nuevo v9)*
+- `eliminarContactoPorId(id)` — DELETE, elimina un contacto por id
 
 ---
 
 ### `src/config.js`
 
-Archivo de configuración global. Exporta `APP_INFO` con los datos del proyecto (título, subtítulo, ficha, etc.) para no tener esos datos regados por todo el código.
+Archivo de configuración global. Exporta `APP_INFO` con los datos del proyecto para no tener esos datos regados por todo el código.
 
 ---
 
-### `src/App.jsx` ← actualizado en v8
+### `src/App.jsx` ← actualizado en v9
 
-Componente principal. Maneja el estado global y ahora también incluye la lógica de búsqueda y ordenamiento.
+Componente principal. Maneja el estado global y toda la lógica del CRUD.
 
 **Estados que maneja:**
 - `contactos` — lista de contactos cargada desde la API
 - `cargando` — controla el mensaje de carga inicial
 - `error` — guarda mensajes de error para mostrarle al usuario
-- `busqueda` *(nuevo v8)* — guarda el texto que escribe el usuario en el buscador
-- `ordenAsc` *(nuevo v8)* — controla si la lista va de A–Z (`true`) o Z–A (`false`)
+- `busqueda` — guarda el texto del buscador
+- `ordenAsc` — controla si la lista va de A–Z o Z–A
+- `contactoEnEdicion` *(nuevo v9)* — guarda el contacto que se está editando, o null si no hay ninguno
 
-**Lógica nueva en v8:**
-- `contactosFiltrados` — aplica `.filter()` sobre `contactos` buscando el término en nombre, correo, teléfono y etiqueta
-- `contactosOrdenados` — aplica `.sort()` sobre `contactosFiltrados` usando el estado `ordenAsc`
-- El JSX ya no recorre `contactos` directamente, sino `contactosOrdenados`
-
----
-
-### `src/components/FormularioContacto.jsx`
-
-Formulario para agregar nuevos contactos. Controla su propio estado local con los campos nombre, teléfono, correo y etiqueta.
-
-- `onChange` — actualiza el campo correspondiente mientras el usuario escribe
-- `onSubmit` — valida los campos obligatorios, llama al padre y limpia el formulario
+**Funciones nuevas en v9:**
+- `onActualizarContacto` — llama a `actualizarContacto` de la API y reemplaza el contacto en la lista
+- `onEditarClick` — activa el modo edición cargando el contacto seleccionado
+- `onCancelarEdicion` — limpia `contactoEnEdicion` y vuelve al modo crear
 
 ---
 
-### `src/components/ContactoCard.jsx`
+### `src/components/FormularioContacto.jsx` ← actualizado en v9
 
-Muestra la información de un contacto en una tarjeta. Recibe los datos como props y tiene un botón eliminar que llama a la función del padre.
+Formulario reutilizable que ahora soporta dos modos:
 
-- Solo muestra etiqueta si tiene valor
-- El botón eliminar identifica el contacto por su id
+- **Modo crear:** cuando `contactoEnEdicion` es null. Muestra "Nuevo contacto" y botón "Agregar contacto".
+- **Modo editar:** cuando `contactoEnEdicion` tiene datos. Carga los campos con la info del contacto, muestra "Editar contacto", botón "Guardar cambios" y botón "Cancelar edición".
+
+El `useEffect` detecta el cambio de `contactoEnEdicion` y actualiza el formulario automáticamente.
+
+---
+
+### `src/components/ContactoCard.jsx` ← actualizado en v9
+
+Muestra la información de un contacto en una tarjeta.
+
+- Botón **Editar** *(nuevo v9)*: llama a `onEditar` para activar el modo edición en el formulario
+- Botón **Eliminar**: llama a `onEliminar` para borrar el contacto de la API y la lista
 
 ---
 
 ### `src/main.jsx`
 
-Punto de entrada de la app. Renderiza el componente `App` dentro del `div#root` e importa el CSS global con Tailwind.
+Punto de entrada de la app. Renderiza `App` dentro del `div#root` e importa el CSS global.
 
 ---
 
@@ -159,25 +162,16 @@ Registra Tailwind y Autoprefixer como plugins de PostCSS.
 
 - Cargar contactos desde la API al iniciar la app (GET)
 - Agregar nuevos contactos desde el formulario (POST)
+- **Editar contactos existentes** con el formulario en modo edición (PUT) *(nuevo v9)*
 - Eliminar contactos de la lista y la API (DELETE)
+- Cancelar la edición y volver al modo crear *(nuevo v9)*
 - Mostrar mensajes de carga y error
 - Diseño responsivo con TailwindCSS
-- **Buscador en tiempo real** por nombre, correo, teléfono y etiqueta *(nuevo v8)*
-- **Ordenamiento A–Z / Z–A** con botón para alternar *(nuevo v8)*
-- Mensaje cuando el filtro no encuentra resultados *(nuevo v8)*
-- **Contador de resultados** que muestra cuántos contactos coinciden con la búsqueda *(mini reto v8)*
+- Buscador en tiempo real por nombre, correo y etiqueta
+- Ordenamiento A–Z / Z–A con botón para alternar
+- Mensaje cuando el filtro no encuentra resultados
+- Contador de resultados que muestra cuántos contactos coinciden con la búsqueda
 
 ---
 
 
----
-
-
----
-
-## 👨‍💻 Autor
-
-Aprendiz SENA – ADSO  
-Ficha: 3229209
-Instructor: Gustavo Bolaños  
-Centro: CTMA – Regional Antioquia
